@@ -6,37 +6,54 @@ const pool = require('../../connections/DB.connect.js');
 const generatePrompt = require('../../controllers/prompt.js');
 const getGeminiResponse = require('../../controllers/gemini.js');
 const parseGeminiResponse = require('../../controllers/respons.js')
+const cloudinary = require("cloudinary").v2;
 require('dotenv').config();
+const fs = require('fs')
 const multer = require('multer');
 const path = require('path');
 const { Result } = require('pg');
 
 const router = express.Router();
+const upload = multer({ dest: "uploads/" });
 
-router.post('/', async (req, res) => {
+cloudinary.config({
+    cloud_name: process.env.CLOUD_NAME,
+    api_key: process.env.CLOUD_API_KEY,
+    api_secret: process.env.CLOUD_API_SECRET
+});
+
+router.post('/',  upload.single("image"), async (req, res) => {
     try {
-        // const login_token = req.cookies.login_token;
-        const login_token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwibmFtZSI6ImRocnV2IiwiaWF0IjoxNzUzOTU1MTQwfQ.4oeArPwVU_cs5EAOsiYHDh7wq7YDnKwNB5H6Pvhh7T0";
+        const login_token = req.cookies.login_token;
 
-        const { medicine_name, medicine_code, image_link } = req.body;
+        const { medicine_name, medicine_code } = req.body;
+        const file = req.file;
+
         const code = medicine_code || null;
 
         // Basic validation
-        if (!medicine_name || !image_link) {
+        if (!medicine_name || !file) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
         if (!login_token) {
             return res.status(400).json({ error: 'you are not login' });
         }
 
-        const data = verifyToken(login_token);
-        console.log(data);
+        // Upload image to Cloudinary
+        const cloudRes = await cloudinary.uploader.upload(file.path, {
+            folder: "medicines"
+        });
 
-        const prompt = generatePrompt(medicine_name, image_link, code);
+        // delete temp file after upload
+        fs.unlinkSync(file.path);
+
+        const imageUrl = cloudRes.secure_url;
+        const data = verifyToken(login_token);
+
+        const prompt = generatePrompt(medicine_name, imageUrl, code);
         const reply = await getGeminiResponse(prompt);
         const parsed = parseGeminiResponse(reply);
 
-        console.log(output)
         res.json({
             medicine_name: medicine_name,
             data: parsed,

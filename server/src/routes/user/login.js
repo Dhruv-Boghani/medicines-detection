@@ -9,8 +9,7 @@ const router = express.Router();
 
 router.post('/', async (req, res) => {
     try {
-        const email = req.body.email;
-        const password = req.body.password;
+        const { email, password } = req.body;
 
         const DBres = await pool.query('SELECT * FROM "users" WHERE email = $1', [email]);
 
