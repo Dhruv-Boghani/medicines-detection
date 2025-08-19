@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import Image from "next/image";
+import toast from "react-hot-toast";
 
 function page() {
   // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -15,25 +16,55 @@ function page() {
   const [medicineCode, setMedicineCode] = useState("");
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      setUploadedFile(file); // keep the actual file
       const reader = new FileReader();
       reader.onloadend = () => {
-        setUploadedImage(reader.result as string);
+        setUploadedImage(reader.result as string); // preview
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault(); // Prevent default form submission behavior
-    console.log("Form Submitted with details:");
-    console.log("Medicine Name:", medicineName);
-    console.log("Medicine Code:", medicineCode);
-    console.log("Uploaded Image URL:", uploadedImage);
-    // Here you would typically send this data to an API or process it
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    const formData = new FormData();
+    formData.append("medicine_name", medicineName);
+    formData.append("medicine_code", medicineCode);
+
+    if (uploadedFile) {
+      formData.append("image", uploadedFile); // ✅ append File, not Base64
+    }
+
+    // Debug: view FormData
+    for (const [key, value] of formData.entries()) {
+      console.log(key, value);
+    }
+
+    try {
+      const res = await fetch("http://localhost:8080/scan", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+
+      if (!res.ok) throw new Error("Failed to analyze medicine.");
+
+      toast.success("Form submitted successfully!");
+      setMedicineName("");
+      setMedicineCode("");
+      setUploadedFile(null);
+      setUploadedImage(null);
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || "Something went wrong");
+    }
   };
 
   const handleClear = () => {
@@ -86,7 +117,7 @@ function page() {
           </div>
           <div>
             <Label htmlFor="medicine-code" className="text-gray-600">
-              Medicine code
+              Medicine code(optional)
             </Label>
             <Input
               id="medicine-code"
@@ -95,7 +126,6 @@ function page() {
               className="mt-1"
               value={medicineCode}
               onChange={(e) => setMedicineCode(e.target.value)}
-              required
             />
           </div>
         </div>

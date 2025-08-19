@@ -22,7 +22,7 @@ cloudinary.config({
 router.post('/',  upload.single("image"), async (req, res) => {
     try {
         const login_token = req.cookies.login_token;
-
+        console.log(req.body)
         const { medicine_name, medicine_code } = req.body;
         const file = req.file;
 
@@ -51,6 +51,7 @@ router.post('/',  upload.single("image"), async (req, res) => {
         const reply = await getGeminiResponse(prompt);
         const parsed = parseGeminiResponse(reply);
 
+        console.log(parsed);
         res.json({
             medicine_name: medicine_name,
             data: parsed,
