@@ -61,6 +61,7 @@ function page() {
       setMedicineCode("");
       setUploadedFile(null);
       setUploadedImage(null);
+      console.log(res);
     } catch (error: any) {
       console.error(error);
       toast.error(error.message || "Something went wrong");

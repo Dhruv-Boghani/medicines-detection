@@ -74,7 +74,7 @@ router.post('/', async (req, res) => {
 
         await pool.query(
             `INSERT INTO "users" (email, password_hash, name, is_verified) VALUES ($1, $2, $3, $4) RETURNING *`,
-            [req.body.email, password, req.body.name, false]
+            [req.body.email, password, req.body.name, true]
         );
 
         const otp = generateOTP(6);

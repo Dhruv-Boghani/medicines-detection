@@ -1,5 +1,4 @@
 {
-  "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/scan-medicineDialog/page": "app/scan-medicineDialog/page.js",
-  "/page": "app/page.js"
+  "/page": "app/page.js",
+  "/scan-medicineDialog/page": "app/scan-medicineDialog/page.js"
 }
