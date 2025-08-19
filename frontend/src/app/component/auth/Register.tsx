@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import axios from "axios";
 import {
   Dialog,
   DialogContent,
@@ -9,27 +10,37 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-// New RegisterDialog Component
+import toast from "react-hot-toast";
+
 export function RegisterDialog({ onClose }: any) {
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-
-  const handleRegister = (event: React.FormEvent) => {
+  const handleRegister = async (event: React.FormEvent) => {
     event.preventDefault();
-    console.log("Registration attempt with:");
-    console.log("Email:", email);
-    console.log("Password:", password);
-    console.log("Confirm Password:", confirmPassword);
-
     if (password !== confirmPassword) {
       alert("Passwords do not match!");
       return;
     }
-    // In a real application, you would send these details to your registration API
-    alert("Registration data logged to console!"); // For demonstration
-    if (typeof onClose === "function") {
-      onClose();
+    try {
+      const response = await axios.post(
+        "http://localhost:8080/signup/",
+        {
+          name,
+          email,
+          password_hash: password,
+        },
+        {
+          withCredentials: true,
+        }
+      );
+      toast.success("Registration successful");
+      console.log("Registration successful:", response.data);
+    } catch (error: any) {
+      console.error("Registration error:", error);
+      toast.error(error);
+      alert("Registration failed. Please try again.");
     }
   };
 
@@ -43,6 +54,20 @@ export function RegisterDialog({ onClose }: any) {
         </DialogHeader>
 
         <form onSubmit={handleRegister} className="space-y-4">
+          <div>
+            <Label htmlFor="userName" className="text-gray-600">
+              UserName
+            </Label>
+            <Input
+              id="userName"
+              type="text"
+              placeholder="xyz_07"
+              className="mt-1 w-full"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          </div>
           <div>
             <Label htmlFor="reg-email" className="text-gray-600">
               Email

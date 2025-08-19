@@ -21,11 +21,7 @@ export function MedicineCategories() {
           <MedicineCategoryCard icon={Syringe} title="Antibiotics" />
           <MedicineCategoryCard icon={Stethoscope} title="Cold & Flu" />
           <MedicineCategoryCard icon={Heart} title="Heart Health" />
-          <MedicineCategoryCard
-            icon={Brain}
-            title="Mental Health"
-            isActive
-          />{" "}
+          <MedicineCategoryCard icon={Brain} title="Mental Health" isActive />
           {/* Active state example */}
           <MedicineCategoryCard icon={Droplet} title="Allergy Relief" />
         </div>

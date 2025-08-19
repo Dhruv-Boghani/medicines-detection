@@ -1,31 +1,29 @@
 "use client";
-// components/ScanMedicineDialog.tsx
 import React, { useState } from "react";
-import { Upload, Check } from "lucide-react";
+import { Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
+import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Image from "next/image";
 import toast from "react-hot-toast";
+import { motion, AnimatePresence } from "framer-motion";
 
-function page() {
-  // eslint-disable-next-line react-hooks/rules-of-hooks
+export default function ScanMedicine() {
   const [medicineName, setMedicineName] = useState("");
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [medicineCode, setMedicineCode] = useState("");
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      setUploadedFile(file); // keep the actual file
+      setUploadedFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setUploadedImage(reader.result as string); // preview
+        setUploadedImage(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -33,18 +31,14 @@ function page() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    setLoading(true);
+    setResult(null);
 
     const formData = new FormData();
     formData.append("medicine_name", medicineName);
     formData.append("medicine_code", medicineCode);
-
     if (uploadedFile) {
-      formData.append("image", uploadedFile); // ✅ append File, not Base64
-    }
-
-    // Debug: view FormData
-    for (const [key, value] of formData.entries()) {
-      console.log(key, value);
+      formData.append("image", uploadedFile);
     }
 
     try {
@@ -54,185 +48,159 @@ function page() {
         credentials: "include",
       });
 
-      if (!res.ok) throw new Error("Failed to analyze medicine.");
-
-      toast.success("Form submitted successfully!");
-      setMedicineName("");
-      setMedicineCode("");
-      setUploadedFile(null);
-      setUploadedImage(null);
-    } catch (error: any) {
-      console.error(error);
-      toast.error(error.message || "Something went wrong");
+      if (!res.ok) throw new Error("Failed to analyze medicine");
+      const data = await res.json();
+      setResult(data);
+      toast.success("Scan complete!");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleClear = () => {
-    setMedicineName("");
-    setMedicineCode("");
-    setUploadedImage(null);
-  };
-
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 sm:p-6">
-      <form
+    <div className="max-w-2xl mx-auto space-y-8">
+      {/* Upload + form */}
+      <motion.form
         onSubmit={handleSubmit}
-        className="relative w-full max-w-2xl rounded-lg bg-white p-6 shadow-lg"
+        className="p-6 rounded-2xl bg-white/70 dark:bg-gray-900/70 shadow-xl backdrop-blur-md space-y-4 border border-gray-200 dark:border-gray-800"
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between pb-4">
-          <h2 className="text-2xl font-bold text-gray-700">Scan Medicine</h2>
-          {/* Removed close button as it's no longer a dialog */}
-        </div>
+        <h2 className="text-xl font-semibold text-center">
+          Scan Your Medicine
+        </h2>
 
-        {/* Upload or Scan Section */}
-        <div className="mb-6">
-          <Label htmlFor="scan-slider" className="text-gray-600">
-            Upload or scan medicine
-          </Label>
-          <Slider
-            id="scan-slider"
-            defaultValue={[50]}
-            max={100}
-            step={1}
-            className="w-full mt-2"
+        <div className="space-y-2">
+          <Label>Medicine Name</Label>
+          <Input
+            value={medicineName}
+            onChange={(e) => setMedicineName(e.target.value)}
+            placeholder="Enter medicine name"
           />
         </div>
 
-        {/* Medicine Inputs */}
-        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <Label htmlFor="medicine-name" className="text-gray-600">
-              Medicine name
-            </Label>
-            <Input
-              id="medicine-name"
-              type="text"
-              placeholder="Aspirin"
-              className="mt-1"
-              value={medicineName}
-              onChange={(e) => setMedicineName(e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="medicine-code" className="text-gray-600">
-              Medicine code(optional)
-            </Label>
-            <Input
-              id="medicine-code"
-              type="text"
-              placeholder="123456"
-              className="mt-1"
-              value={medicineCode}
-              onChange={(e) => setMedicineCode(e.target.value)}
-            />
-          </div>
+        <div className="space-y-2">
+          <Label>Medicine Code</Label>
+          <Input
+            value={medicineCode}
+            onChange={(e) => setMedicineCode(e.target.value)}
+            placeholder="Enter code"
+          />
         </div>
 
-        {/* Scan Options */}
-        <div className="mb-6">
-          <h3 className="mb-3 text-lg font-semibold text-gray-700">
-            Scan Options
-          </h3>
-          <div className="grid grid-cols-1 gap-4">
-            <label
-              htmlFor="image-upload"
-              className="flex h-32 flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 text-gray-600 hover:bg-gray-100 cursor-pointer"
+        <div className="space-y-2">
+          <Label>Upload Image</Label>
+          <Input type="file" accept="image/*" onChange={handleImageUpload} />
+
+          {uploadedImage && (
+            <motion.div
+              className="w-32 h-32 relative mt-2 rounded-xl overflow-hidden shadow-md"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
             >
-              {uploadedImage ? (
-                <Image
-                  src={uploadedImage}
-                  alt="Uploaded"
-                  width={50}
-                  height={50}
-                  className="h-full w-full object-cover rounded-lg"
-                />
-              ) : (
-                <>
-                  <Upload className="mb-2 h-8 w-8" />
-                  Upload Image
-                </>
-              )}
-              <input
-                id="image-upload"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImageUpload}
+              <Image
+                src={uploadedImage}
+                alt="Preview"
+                fill
+                className="object-cover"
               />
-            </label>
-          </div>
+            </motion.div>
+          )}
         </div>
 
-        {/* Recent Searches */}
-        <div className="mb-6">
-          <h3 className="mb-3 text-lg font-semibold text-gray-700">
-            Recent Searches
-          </h3>
-          <div className="relative mb-4 flex items-center justify-between rounded-md bg-gray-100 p-2">
-            <span className="text-sm font-medium text-gray-700">
-              UPGRADE PLAN
-            </span>
-          </div>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <div className="flex items-center space-x-2">
-              <Check className="h-4 w-4 text-green-500" />
-              <span className="text-gray-700">Recent 1</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Check className="h-4 w-4 text-green-500" />
-              <span className="text-gray-700">Recent 2</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Check className="h-4 w-4 text-green-500" />
-              <span className="text-gray-700">Pain reliever</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Check className="h-4 w-4 text-green-500" />
-              <span className="text-gray-700">Fever</span>
-            </div>
-          </div>
-        </div>
+        <Button
+          type="submit"
+          disabled={loading}
+          className="w-full flex items-center justify-center gap-2 rounded-xl"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              Scanning...
+            </>
+          ) : (
+            <>
+              <Upload className="w-5 h-5" />
+              Scan Now
+            </>
+          )}
+        </Button>
+      </motion.form>
 
-        {/* Other Options */}
-        <div className="mb-8">
-          <h3 className="mb-3 text-lg font-semibold text-gray-700">Other</h3>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            <div className="flex items-center space-x-2">
-              <Check className="h-4 w-4 text-green-500" />
-              <span className="text-gray-700">Detailed info</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Check className="h-4 w-4 text-green-500" />
-              <span className="text-gray-700">Dosage info</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Check className="h-4 w-4 text-green-500" />
-              <span className="text-gray-700">Side</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer Buttons */}
-        <div className="flex items-center justify-between pt-4">
-          <Button
-            variant="ghost"
-            className="text-gray-600 hover:text-gray-800"
-            onClick={handleClear}
+      {/* Result with animation */}
+      <AnimatePresence>
+        {loading && (
+          <motion.div
+            className="p-6 rounded-2xl bg-white/70 dark:bg-gray-900/70 shadow-lg backdrop-blur-md border border-gray-200 dark:border-gray-800"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
           >
-            Clear
-          </Button>
-          <Button
-            type="submit"
-            className="bg-blue-200 text-blue-800 hover:bg-blue-300"
+            {/* Skeleton shimmer */}
+            <div className="animate-pulse space-y-4">
+              <div className="h-5 bg-gray-300 dark:bg-gray-700 rounded w-1/3"></div>
+              <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-2/3"></div>
+              <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-1/2"></div>
+              <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4"></div>
+            </div>
+          </motion.div>
+        )}
+
+        {result && (
+          <motion.div
+            key="result"
+            className="p-6 mb-10 rounded-2xl bg-gradient-to-r from-green-50 to-emerald-100 dark:from-gray-900 dark:to-gray-800 shadow-2xl border border-green-200 dark:border-gray-700"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6 }}
           >
-            Scan Now
-          </Button>
-        </div>
-      </form>
+            <CardHeader>
+              <CardTitle className="text-lg font-bold text-green-700 dark:text-green-300">
+                Analysis for {result.medicine_name}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-gray-700 dark:text-gray-300">
+                <strong>Summary:</strong> {result.data.summary}
+              </p>
+              <p className="text-gray-700 dark:text-gray-300">
+                <strong>Conclusion:</strong> {result.data.conclusion}
+              </p>
+
+              {result.data.possible_fake_reasons?.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <strong className="text-red-600 dark:text-red-400">
+                    Possible Fake Reasons:
+                  </strong>
+                  <ul className="list-disc pl-6 mt-2 text-sm text-gray-700 dark:text-gray-300">
+                    {result.data.possible_fake_reasons.map(
+                      (reason: string, idx: number) => (
+                        <motion.li
+                          key={idx}
+                          initial={{ x: -10, opacity: 0 }}
+                          animate={{ x: 0, opacity: 1 }}
+                          transition={{ delay: idx * 0.1 }}
+                        >
+                          {reason}
+                        </motion.li>
+                      )
+                    )}
+                  </ul>
+                </motion.div>
+              )}
+            </CardContent>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
-
-export default page;
