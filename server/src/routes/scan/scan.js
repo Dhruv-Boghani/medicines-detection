@@ -1,8 +1,5 @@
 const express = require('express');
 const { generateToken, verifyToken } = require('../../utils/jwt.js');
-const { hashPassword, comparePassword } = require('../../utils/hash.js');
-const generateOTP = require('../../controllers/createOTP.controllers.js');
-const pool = require('../../connections/DB.connect.js');
 const generatePrompt = require('../../controllers/prompt.js');
 const getGeminiResponse = require('../../controllers/gemini.js');
 const parseGeminiResponse = require('../../controllers/respons.js')
