@@ -48,15 +48,17 @@ export default function ScanMedicine() {
         credentials: "include",
       });
 
-      if (!res.ok) throw new Error("Failed to analyze medicine");
-      const data = await res.json();
-      setResult(data);
-      toast.success("Scan complete!");
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || "Something went wrong");
-    } finally {
-      setLoading(false);
+      if (!res.ok) throw new Error("Failed to analyze medicine.");
+
+      toast.success("Form submitted successfully!");
+      setMedicineName("");
+      setMedicineCode("");
+      setUploadedFile(null);
+      setUploadedImage(null);
+      console.log(res);
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || "Something went wrong");
     }
   };
 

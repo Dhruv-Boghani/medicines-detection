@@ -22,5 +22,6 @@ app.use('/signup', require('./src/routes/user/signup.js'));
 app.use('/login', require('./src/routes/user/login.js'));
 app.use('/delete', require('./src/routes/user/delete.js'))
 app.use('/scan', require('./src/routes/scan/scan.js'))
+app.use("/profile" , require("./src/routes/profile/profile.js"))
 
 module.exports = app
